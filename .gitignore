@@ -1,0 +1,12 @@
+env/
+*.tfstate
+*.backup
+.terraform/
+*~
+terraform
+kubectl
+cfssl
+cfssljson
+aws_env.sh
+private/
+*.pem

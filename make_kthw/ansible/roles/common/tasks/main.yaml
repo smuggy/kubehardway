@@ -1,0 +1,28 @@
+---
+- name: test hello
+  command: echo "hello world"
+
+- name: create on one
+  file:
+    path: "/tmp/afile"
+    state: touch
+
+- name: test command
+  command: "chdir={{ dirname }}  ls -a"
+  register: dirvals
+
+- name: display dir
+  debug:
+    msg: "{{ dirvals.stdout }}"
+
+- name: install docker
+  become: yes
+  apt:
+    name: docker.io
+    state: present
+
+- name: update host file
+  blockinfile:
+    dest: /etc/hosts
+    content: "{{ lookup('template', 'templates/hosts.j2') }}"
+    state: present
