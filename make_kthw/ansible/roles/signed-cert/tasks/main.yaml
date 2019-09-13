@@ -1,0 +1,30 @@
+- name: create private key for {{ cert_name }}
+  openssl_privatekey:
+    path: "{{ priv_dir }}/{{ cert_name }}-key.pem"
+    size: 2048
+    mode: 0400
+
+- name: create csr for {{cert_name}}
+  openssl_csr:
+    common_name: "{{ common_name }}"
+    privatekey_path: "{{ priv_dir }}/{{ cert_name }}-key.pem"
+    path: "{{ priv_dir }}/{{ cert_name }}.csr"
+    country_name: US
+    state_or_province_name: Illinois
+    locality_name: Chicago
+    organization_name: "{{ org_name }}"
+    organizational_unit_name: "{{ ou_name }}"
+    subject_alt_name: "{{ subject_name|default('DNS:'+cert_name) }}"
+    key_usage:
+      - keyEncipherment
+    extended_key_usage:
+      - clientAuth
+      - serverAuth
+
+- name: create signed certificate for {{ cert_name }}
+  openssl_certificate:
+    path: "{{ priv_dir }}/{{ cert_name }}.crt"
+    csr_path: "{{ priv_dir }}/{{ cert_name }}.csr"
+    ownca_path: "{{ priv_dir }}/{{ ca_name }}.crt"
+    ownca_privatekey_path: "{{ priv_dir }}/{{ ca_name }}-key.pem"
+    provider: ownca

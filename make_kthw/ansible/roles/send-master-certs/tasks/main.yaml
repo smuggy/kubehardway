@@ -1,0 +1,30 @@
+---
+- name: copy ca key
+  copy:
+    src: private/ca-key.pem
+    dest: /home/ubuntu
+
+- name: copy ca cert
+  copy:
+    src: private/ca.crt
+    dest: /home/ubuntu
+
+- name: copy kubernetes key
+  copy:
+    src: private/kubernetes-key.pem
+    dest: /home/ubuntu
+
+- name: copy kubernetes cert
+  copy:
+    src: private/kubernetes.crt
+    dest: /home/ubuntu
+
+- name: copy service account key
+  copy:
+    src: private/service-account-key.pem
+    dest: /home/ubuntu
+
+- name: copy service account cert
+  copy:
+    src: private/service-account.crt
+    dest: /home/ubuntu

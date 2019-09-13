@@ -1,0 +1,106 @@
+---
+- name: create ssh
+  shell: date > myfile.txt
+
+- name: create private directory
+  file:
+    path: ./private
+    state: directory
+    mode: 0775
+
+- name: create ca key
+  openssl_privatekey:
+    path: private/ca-key.pem
+    size: 2048
+    mode: 0400
+
+- name: create csr for ca
+  openssl_csr:
+    privatekey_path: private/ca-key.pem
+    path: private/ca.csr
+    country_name: US
+    state_or_province_name: Illinois
+    locality_name: Chicago
+    organization_name: OCC
+    organizational_unit_name: Platform Automation
+    key_usage:
+      - digitalSignature
+      - keyAgreement
+    extended_key_usage:
+      - clientAuth
+
+- name: create ca certificate
+  openssl_certificate:
+    path: private/ca.crt
+    privatekey_path: private/ca-key.pem
+    csr_path: private/ca.csr
+    provider: selfsigned
+
+- name: create admin cert
+  include_role:
+    name: signed-cert
+  vars:
+    common_name: admin
+    cert_name: admin
+
+- name: create kube-proxy cert
+  include_role:
+    name: signed-cert
+  vars:
+    common_name: system:kube-proxy
+    cert_name: kube-proxy
+    org_name: system:node_proxier
+
+- name: create kube-scheduler cert
+  include_role:
+    name: signed-cert
+  vars:
+    common_name: system:kube-scheduler
+    cert_name: kube-scheduler
+    org_name: system:kube-scheduler
+
+- name: create kube-controller-manager cert
+  include_role:
+    name: signed-cert
+  vars:
+    common_name: system:kube-controller-manager
+    cert_name: kube-controller-manager
+    org_name: system:kube-controller-manager
+
+- name: create service accounts cert
+  include_role:
+    name: signed-cert
+  vars:
+    common_name: service-accounts
+    cert_name: service-account
+    org_name: Kubernetes
+
+- set_fact:
+    controller_list: "{{ controller_list| default([]) + ['DNS:' + item] }}"
+  with_items:
+    "{{ groups['masters'] }}"
+
+- set_fact:
+    controllers: "{{ controller_list | join(',') }}"
+
+- debug:
+    msg: "{{ controllers }}"
+
+- name: create kubernetes cert
+  include_role:
+    name: signed-cert
+  vars:
+    common_name: kubernetes
+    cert_name: kubernetes
+    org_name: kubernetes
+    subject_name: "{{ controllers }},DNS:kubernetes.default,IP:127.0.0.1"
+
+- name: create worker certs
+  include_role:
+    name: signed-cert
+  vars:
+    common_name: "{{ item }}"
+    cert_name: "{{ item }}"
+    org_name: "system:nodes"
+    ou_name: "Kubernetes The Hard Way"
+  with_items: "{{ groups['workers'] }}"

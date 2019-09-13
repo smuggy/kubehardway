@@ -1,7 +1,22 @@
 #
 #
-- name: Configure server
-  hosts: all
-  become: true
+#- name: Configure server
+  #  hosts: all
+  #become: true
+  #roles:
+  #  - common
+
+- name: Configure local
+  hosts: localhost
   roles:
-    - common
+    - local
+
+- name: configure workers
+  hosts: workers
+  roles:
+    - send-worker-certs
+
+- name: configure masters
+  hosts: masters
+  roles:
+    - send-master-certs

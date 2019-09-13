@@ -1,0 +1,4 @@
+priv_dir: './private'
+org_name: 'OCC'
+ou_name: 'Platform Automation'
+ca_name: 'ca'

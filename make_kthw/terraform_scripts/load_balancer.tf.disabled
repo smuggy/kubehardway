@@ -1,0 +1,89 @@
+# Network Load Balancer for https per
+
+resource "aws_lb_target_group" "kube_https" {
+  name     = "kthw-mm-lb-https-tg"
+  port     = 443
+  protocol = "TCP"
+  vpc_id   = "${local.vpc_id}"
+  health_check {
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
+    timeout             = 6
+    interval            = 10
+    protocol            = "HTTP"
+    path                = "/healthz"
+    port                = 80
+    matcher             = "200-399"
+  }
+}
+
+resource "aws_lb_target_group" "kube_http" {
+  name     = "kthw-mm-lb-http-tg"
+  port     = 80
+  protocol = "TCP"
+  vpc_id   = "${local.vpc_id}"
+  health_check {
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
+    timeout             = 6
+    interval            = 10
+    protocol            = "HTTP"
+    path                = "/healthz"
+    matcher             = "200-399"
+  }
+}
+
+resource "aws_lb_target_group_attachment" "kube_http" {
+  count = "${local.mcount}"
+  target_group_arn = "${aws_lb_target_group.kube_http.arn}"
+  target_id        = "${element(aws_instance.kube-master.*.id,count.index)}"
+  port             = 80
+}
+
+resource "aws_lb_target_group_attachment" "kube_https" {
+  count = "${local.mcount}"
+  target_group_arn = "${aws_lb_target_group.kube_https.arn}"
+  target_id        = "${element(aws_instance.kube-master.*.id,count.index)}"
+  port             = 443
+}
+
+resource "aws_lb" "kube_https" {
+  name               = "kthw-mm-lb-https"
+  internal           = "true"
+  load_balancer_type = "network"
+  subnets            = ["local.subnet_id}"]
+  tags = {
+        Name           = "kthw-mm-lb-https"
+        cost_center    = "308"
+  }
+}
+
+resource "aws_lb_listener" "kube_https" {
+  load_balancer_arn = "${aws_lb.kube_https.arn}"
+  port              = "443"
+  protocol          = "TCP"
+  default_action {
+    type             = "forward"
+    target_group_arn = "${aws_lb_target_group.kube_https.arn}"
+  }
+}
+
+resource "aws_lb_listener" "kube_http" {
+  load_balancer_arn = "${aws_lb.kube_https.arn}"
+  port              = "80"
+  protocol          = "TCP"
+  default_action {
+    type             = "forward"
+    target_group_arn = "${aws_lb_target_group.kube_http.arn}"
+  }
+}
+
+resource "aws_lb_listener" "kube_https6443" {
+  load_balancer_arn = "${aws_lb.kube_https.arn}"
+  port              = "6443"
+  protocol          = "TCP"
+  default_action {
+    type             = "forward"
+    target_group_arn = "${aws_lb_target_group.kube_https.arn}"
+  }
+}

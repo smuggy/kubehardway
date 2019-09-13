@@ -27,3 +27,7 @@ output "worker_ip_addresses" {
     description = "ip addresses"
     value = "${aws_instance.kube-worker.*.private_ip}"
 }
+
+#output "lb_https_dns" {
+#    value = "${aws_lb.kube_https.*.dns_name}"
+#}

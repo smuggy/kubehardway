@@ -1,0 +1,9 @@
+- name: move key file
+  copy:
+    src: "private/{{ ansible_host }}-key.pem"
+    dest: /home/ubuntu
+
+- name: move key file
+  copy:
+    src: "private/{{ ansible_host }}.crt"
+    dest: /home/ubuntu
